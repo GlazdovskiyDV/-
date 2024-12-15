@@ -1,0 +1,76 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>
+#include <UniversalTelegramBot.h>
+#include <ArduinoJson.h>
+
+// Замените на свои сетевые данные
+  const char* ssid = "***"; // Название сети
+  const char* password = "***" // Пароль сети;
+
+// Инициализация Telegram бота
+#define BOTtoken "***"  // Ваш Токен
+
+
+#define CHAT_ID "***" // ID чата
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(BOTtoken, client);
+
+const int trigPin = 4;
+const int echoPin = 5;                                  
+bool motionDetected = false;
+
+// Индикация обнаружения движения
+void ICACHE_RAM_ATTR detectsMovement() {
+  motionDetected = true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Serial.begin(115200);
+  client.setInsecure();
+
+  // Cоединение с Wifi сетью:
+  Serial.print("Соединение с Wifi: ");
+  Serial.println(ssid);
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+
+  Serial.println("");
+  Serial.println("WiFi соединение установлено");
+  Serial.print("IP адрес: ");
+  Serial.println(WiFi.localIP());
+
+  bot.sendMessage(CHAT_ID, "Бот стартовал", "");
+}
+
+void loop() {
+
+  long duration, distance;
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2; // преобразование в см
+
+  if (distance < 20) { // при расстоянии менее 20 см
+   bot.sendMessage(CHAT_ID, "Обнаружено движение!!!", "");
+    Serial.println("Обнаружено движение");
+    motionDetected = false;
+}
+  
+  delay(250);// Задержка для корректной работы HC-SR04
+}
